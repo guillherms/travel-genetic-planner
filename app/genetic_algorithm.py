@@ -5,7 +5,7 @@ import pandas as pd
 from geopy.distance import geodesic
 
 # Fixed hotel coordinates (example: Hotel Paris Bastille)
-HOTEL_COORDS = (48.853, 2.370)  # latitude, longitude
+HOTEL_COORDS = ("Hotel", 48.853, 2.370)  # latitude, longitude
 
 def calculate_distance(point1, point2):
     return geodesic(point1, point2).kilometers
@@ -14,13 +14,17 @@ def total_route_distance(route):
     total = 0.0
     current = HOTEL_COORDS
     for point in route:
-        total += calculate_distance(current, point)
-        current = point
-    total += calculate_distance(current, HOTEL_COORDS)  # return to hotel
+        point_la = point[1]  # latitude
+        point_lo = point[2]  # longitude
+        current_la = current[1]  # latitude
+        current_lo = current[2]  # longitude
+        total += calculate_distance((current_la, current_lo), (point_la, point_lo))
+        current = point  # update current to the next point's coordinates
+    total += calculate_distance(current[1:3], HOTEL_COORDS[1:3])  # return to hotel
     return total
 
-def create_initial_population(coords_list, size=50):
-    return [random.sample(coords_list, len(coords_list)) for _ in range(size)]
+def create_initial_population(locations, size=50):
+    return [random.sample(locations, len(locations)) for _ in range(size)]
 
 def crossover(parent1, parent2):
     cut = random.randint(1, len(parent1) - 2)
@@ -39,8 +43,8 @@ def select_parents(population, fitnesses):
     sorted_population = [x for _, x in sorted(zip(fitnesses, population))]
     return sorted_population[:2]  # best two
 
-def run_genetic_algorithm(coords_list, generations=100, population_size=50):
-    population = create_initial_population(coords_list, population_size)
+def run_genetic_algorithm(locations: list[tuple[str, str]], generations=100, population_size=50):
+    population = create_initial_population(locations, population_size)
     best_route, best_distance = None, float('inf')
     for gen in range(generations):
         fitnesses = [total_route_distance(route) for route in population]
@@ -60,7 +64,7 @@ def run_genetic_algorithm(coords_list, generations=100, population_size=50):
     return best_route, best_distance
 
 if __name__ == "__main__":
-    df = pd.read_csv("data/places_with_coords.csv")
-    coords_list = list(zip(df["latitude"], df["longitude"]))
-    best_route, best_distance = run_genetic_algorithm(coords_list)
+    df = pd.read_csv("data/places_with_coords_mock.csv")
+    locations = list(zip(df["places"], df["latitude"], df["longitude"]))
+    best_route, best_distance = run_genetic_algorithm(locations)
     print(f"Best route found with total distance: {best_distance:.2f} km")
