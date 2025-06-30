@@ -1,13 +1,10 @@
-# streamlit_app.py
-
 import streamlit as st
 import pandas as pd
 import folium
 from geopy.distance import geodesic
 from streamlit_folium import st_folium
-from genetic_algorithm import run_genetic_algorithm
-
-HOTEL_COORDS = (48.853, 2.370)
+from genetic_algorithm import run_genetic_algorithm_for_multiple_days, HOTEL_COORDS
+from datetime import date
 
 st.set_page_config(page_title="Travel Route Optimizer", layout="wide")
 st.title("🗺️ Travel Route Optimizer with Genetic Algorithm")
@@ -15,29 +12,33 @@ st.title("🗺️ Travel Route Optimizer with Genetic Algorithm")
 # Load coordinates from CSV
 try:
     df = pd.read_csv("data/places_with_coords_mock.csv")
-    locations = list(zip(df["places"], df["latitude"], df["longitude"]))
 except Exception as e:
-    st.error("Error loading coordinates. Make sure places_with_coords.csv exists.")
+    st.error("Error loading coordinates. Make sure the file exists.")
     st.stop()
 
-# GA parameters
+# Sidebar inputs
+st.sidebar.header("Trip Settings")
+start_date, end_date = st.sidebar.date_input(
+    "Select trip range:",
+    value=(date.today(), date.today()),
+    min_value=date.today()
+)
+
 st.sidebar.header("Genetic Algorithm Settings")
 generations = st.sidebar.slider("Generations", 10, 500, 100, 10)
 pop_size = st.sidebar.slider("Population Size", 10, 200, 50, 10)
 time_limit = st.sidebar.slider("Daily Time Limit (minutes)", 60, 600, 360, 30)
 
-# Session state to keep results
-if "best_route" not in st.session_state:
-    st.session_state.best_route = None
-    st.session_state.best_distance = None
+if "routes" not in st.session_state:
+    st.session_state.routes = []
 
 if st.button("Run Optimization"):
-    with st.spinner("Running Genetic Algorithm..."):
-        best_route, best_distance = run_genetic_algorithm(locations, generations, pop_size)
-        st.session_state.best_route = best_route
-        st.session_state.best_distance = best_distance
+    with st.spinner("Running Genetic Algorithm for each day..."):
+        results = run_genetic_algorithm_for_multiple_days(df, start_date, end_date, generations, pop_size)
+        st.session_state.routes = results
 
 # Helper to classify segments
+
 def estimate_travel_time_km(dist_km):
     if dist_km <= 2:
         return (dist_km / 5) * 60, "walk"
@@ -51,13 +52,13 @@ def classify_segments(route, coord_to_name):
         end = route[i + 1]
         dist_km = geodesic(start, end).kilometers
         travel_time, mode = estimate_travel_time_km(dist_km)
-        
+
         key_start = (round(start[0], 5), round(start[1], 5))
         key_end = (round(end[0], 5), round(end[1], 5))
-        
+
         segments.append({
-            "From": coord_to_name.get(key_start, "Hotel"),
-            "To": coord_to_name.get(key_end, "Hotel"),
+            "From": coord_to_name.get(key_start, "Unknown"),
+            "To": coord_to_name.get(key_end, "Unknown"),
             "Distance (km)": round(dist_km, 2),
             "Mode": mode,
             "Travel time (min)": round(travel_time, 1)
@@ -81,14 +82,13 @@ def split_route_by_day(route, df, coord_to_name, time_limit):
             current_day = []
             total_time = 0.0
 
-        total_time += travel_time + visit_time
         key = (round(stop[0], 5), round(stop[1], 5))
-        
         current_day.append({
             "place": coord_to_name.get(key, "Unknown"),
             "visit_time_min": visit_time,
             "travel_time_min": round(travel_time, 1)
         })
+        total_time += travel_time + visit_time
         current = stop
 
     if current_day:
@@ -96,39 +96,44 @@ def split_route_by_day(route, df, coord_to_name, time_limit):
 
     return days
 
-if st.session_state.best_route:
-    best_route = st.session_state.best_route
-    best_distance = st.session_state.best_distance
+# Display results
+if st.session_state.routes:
+    for day_result in st.session_state.routes:
+        route = day_result["route"]
+        date_label = day_result["date"].strftime("%A, %d %b %Y")
+        distance = day_result["distance"]
 
-    # Se best_route inclui (name, lat, lon), extraímos apenas as coordenadas
-    best_route_coords = [(lat, lon) for _, lat, lon in best_route]
-    full_route = [HOTEL_COORDS] + best_route_coords + [HOTEL_COORDS]
+        st.header(f"📅 {date_label} — Total distance: {distance:.2f} km")
 
-    # Criamos o dicionário de nome por coordenada
-    coord_to_name = {(round(lat, 5), round(lon, 5)): name for name, lat, lon in best_route}
+        if not route:
+            st.warning("No open places for this day.")
+            continue
 
-    m = folium.Map(location=HOTEL_COORDS, zoom_start=13)
-    for i, coord in enumerate(full_route):
-        key = (round(coord[0], 5), round(coord[1], 5))
-        label = "Hotel" if coord == HOTEL_COORDS else coord_to_name.get(key, f"Stop {i}")
-        folium.Marker(
-            location=coord,
-            tooltip=label,
-            icon=folium.Icon(color="blue", icon="info-sign")
-        ).add_to(m)
+        coords_only = [(lat, lon) for _, lat, lon in route]
+        full_route = [HOTEL_COORDS] + coords_only + [HOTEL_COORDS]
+        coord_to_name = {(round(lat, 5), round(lon, 5)): name for name, lat, lon in route}
 
-    folium.PolyLine(locations=full_route, color="blue", weight=3).add_to(m)
-    st.success(f"✅ Best route total distance: {best_distance:.2f} km")
-    st_folium(m, width=900, height=600)
+        m = folium.Map(location=HOTEL_COORDS, zoom_start=13)
+        for i, coord in enumerate(full_route):
+            key = (round(coord[0], 5), round(coord[1], 5))
+            label = "Hotel" if coord == HOTEL_COORDS else coord_to_name.get(key, f"Stop {i}")
+            folium.Marker(
+                location=coord,
+                tooltip=label,
+                icon=folium.Icon(color="blue", icon="info-sign")
+            ).add_to(m)
 
-    segments = classify_segments(full_route, coord_to_name)
-    st.subheader("🧭 Route Details by Segment")
-    st.dataframe(pd.DataFrame(segments))
+        folium.PolyLine(locations=full_route, color="blue", weight=3).add_to(m)
+        st_folium(m, width=900, height=500)
 
-    st.subheader("📅 Daily Itinerary (Grouped by Time Limit)")
-    daily = split_route_by_day(best_route_coords, df, coord_to_name, time_limit)
-    for i, day in enumerate(daily, 1):
-        st.markdown(f"### Day {i} — Total time: {day['total_time']} min")
-        st.dataframe(pd.DataFrame(day["stops"]))
+        segments = classify_segments(full_route, coord_to_name)
+        st.subheader("🧭 Route Details by Segment")
+        st.dataframe(pd.DataFrame(segments))
+
+        st.subheader("📋 Itinerary (Grouped by Time Limit)")
+        itinerary = split_route_by_day(coords_only, df, coord_to_name, time_limit)
+        for i, day in enumerate(itinerary, 1):
+            st.markdown(f"### Block {i} — Total time: {day['total_time']} min")
+            st.dataframe(pd.DataFrame(day["stops"]))
 else:
-    st.info("Click the button to run the optimization and view the best route.")
+    st.info("Select a date range and click the button to generate your optimized travel plan.")
