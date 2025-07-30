@@ -1,41 +1,100 @@
 import streamlit as st
+import logging
 import pandas as pd
 import folium
+from io import StringIO
+from pydantic import ValidationError
+#from data.model.file import FileSchema
+from open_api import OpenAi
+from files_schema import FileSchema
 from geopy.distance import geodesic
 from streamlit_folium import st_folium
 from genetic_algorithm import run_genetic_algorithm_for_multiple_days, HOTEL_COORDS
 from datetime import date
+from streamlit.runtime.uploaded_file_manager import UploadedFile
+
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+def read_csv_file(uploaded_file: UploadedFile) -> pd.DataFrame:
+    try:
+        tasks_dataframe = pd.read_csv(uploaded_file)
+        validate_dataframe(tasks_dataframe)
+        tasks_dataframe.set_index("task", inplace=True)
+        return tasks_dataframe
+    except ValueError as e:
+        logging.exception(f"Validation failed!: {e}")
+        raise
+    except Exception as e:
+        logging.exception(f"An unexpected error occurred while reading the CSV file: {e}")
+        raise
+
+def validate_dataframe(df: pd.DataFrame) -> None:
+    required_columns = {"task", "description", "dependencies", "duration", "priority"}
+    print(df.columns)
+    missing = required_columns - set(df.columns)
+    if missing:
+        raise ValueError(f"Colunas faltando: {missing}")
+    
+    for i, row in df.iterrows():
+        try:
+            FileSchema(**row.to_dict())
+        except ValidationError as e:
+            raise ValueError(f"Erro na linha {i}: {e}")
+        
+def string_to_dataframe(csv_string: str) -> pd.DataFrame:
+    df = pd.read_csv(StringIO(csv_string))
+    df.columns = df.columns.str.strip()
+    return df
+
 
 st.set_page_config(page_title="Travel Route Optimizer", layout="wide")
 st.title("🗺️ Travel Route Optimizer with Genetic Algorithm")
 
-# Load coordinates from CSV
-try:
-    df = pd.read_csv("data/places_with_coords_mock.csv")
-except Exception as e:
-    st.error("Error loading coordinates. Make sure the file exists.")
-    st.stop()
-
-# Sidebar inputs
+# Sidebar
 st.sidebar.header("Trip Settings")
-start_date, end_date = st.sidebar.date_input(
-    "Select trip range:",
-    value=(date.today(), date.today()),
-    min_value=date.today()
-)
 
-st.sidebar.header("Genetic Algorithm Settings")
-generations = st.sidebar.slider("Generations", 10, 500, 100, 10)
-pop_size = st.sidebar.slider("Population Size", 10, 200, 50, 10)
-time_limit = st.sidebar.slider("Daily Time Limit (minutes)", 60, 600, 360, 30)
+
+with st.sidebar.expander("🧬 Genetic Algorithm Settings", expanded=True):
+    generations = st.slider("Generations Size", 10, 500, 100, 10)
+    pop_size = st.slider("Population Size", 10, 200, 50, 10)
+
+with st.sidebar.expander("🗓️ Trip Configuration - Time Limit", expanded=True):
+    start_date = st.date_input("Start Date", date.today(), format="DD/MM/YYYY")
+    end_date = st.date_input("End Date", start_date, format="DD/MM/YYYY")
+    time_limit = st.slider("Time Limit per Day (minutes)", 60, 480, 240, 30)
+
+
+tipo = st.selectbox("Como deseja ser contatado?", ["Selecione", "Arquivo", "Texto"])
+hotel = st.text_input("Hotel Name", placeholder="Name of your hotel (e.g., Hotel XYZ)")
+
+if tipo == "Arquivo":
+    uploaded_file = st.file_uploader("📂 Upload CSV file", type=["csv"])
+    read_csv_file(uploaded_file)
+elif tipo == "Texto":
+    destination = st.text_input(placeholder="Enter destination name (e.g., Paris)", label="Destination Name")
+    if destination:
+        open_ai = OpenAi(place_name=destination, start_date=start_date, end_date=end_date)
+        response = open_ai.generate_suggestion_tourist_points()
+        string_to_dataframe(response)
+
+
 
 if "routes" not in st.session_state:
     st.session_state.routes = []
 
 if st.button("Run Optimization"):
     with st.spinner("Running Genetic Algorithm for each day..."):
-        results = run_genetic_algorithm_for_multiple_days(df, start_date, end_date, generations, pop_size)
-        st.session_state.routes = results
+        if tipo == "Arquivo":
+            df = read_csv_file(uploaded_file)
+        elif tipo == "Texto":
+            df = string_to_dataframe(response)
+        else:
+            st.error("Please select a valid input method (File or Text).")
+            st.stop()
+        #results = run_genetic_algorithm_for_multiple_days(df, start_date, end_date, generations, pop_size)
+        #t.session_state.routes = results
 
 # Helper to classify segments
 
