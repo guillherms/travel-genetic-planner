@@ -1,5 +1,5 @@
-import requests
 import time
+import requests
 import pandas as pd
 
 def get_coordinates(place_name):
@@ -31,6 +31,8 @@ def enrich_pois_with_coordinates(csv_path):
     return df
 
 if __name__ == "__main__":
-    enriched_df = enrich_pois_with_coordinates("data/places.csv")
-    enriched_df.to_csv("data/places_with_coords.csv", index=False)
-    print("Arquivo salvo com coordenadas!")
+    #enriched_df = enrich_pois_with_coordinates("data/places.csv")
+    #enriched_df.to_csv("data/places_with_coords.csv", index=False)
+    #print("Arquivo salvo com coordenadas!")
+    place = get_coordinates("ホテル 清栄京都 河原町, Kyoto")
+    print(place)

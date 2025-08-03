@@ -1,0 +1,143 @@
+{
+    "melhor_fitness": -2370.058552050972,
+    "geracoes_executadas": 26,
+    "melhor_individuo_idx": [
+        7,
+        8,
+        13,
+        12,
+        6,
+        5,
+        1,
+        10,
+        14,
+        3,
+        4,
+        0,
+        9,
+        11,
+        2
+    ],
+    "melhor_individuo_nomes": [
+        "Minoo Park, Osaka",
+        "Umeda Sky Building, Osaka",
+        "Osaka Science Museum, Osaka",
+        "Hozenji Yokocho Alley, Osaka",
+        "Shitennoji Temple, Osaka",
+        "Tsutenkaku Tower, Osaka",
+        "Dotonbori, Osaka",
+        "Nakanoshima Park, Osaka",
+        "National Bunraku Theater, Osaka",
+        "Shinsekai, Osaka",
+        "Osaka Aquarium Kaiyukan, Osaka",
+        "Osaka Castle, Osaka",
+        "Sumiyoshi Taisha, Osaka",
+        "Tempozan Ferris Wheel, Osaka",
+        "Universal Studios Japan, Osaka"
+    ],
+    "roteiro_por_dia": {
+        "2025-08-03": {
+            "locais": [
+                {
+                    "nome": "Minoo Park, Osaka",
+                    "latitude": 34.8269,
+                    "longitude": 135.4706
+                }
+            ]
+        },
+        "2025-08-04": {
+            "locais": [
+                {
+                    "nome": "Umeda Sky Building, Osaka",
+                    "latitude": 34.705252,
+                    "longitude": 135.490533
+                },
+                {
+                    "nome": "Osaka Science Museum, Osaka",
+                    "latitude": 34.691295,
+                    "longitude": 135.491919
+                }
+            ]
+        },
+        "2025-08-05": {
+            "locais": [
+                {
+                    "nome": "Hozenji Yokocho Alley, Osaka",
+                    "latitude": 34.668723,
+                    "longitude": 135.502285
+                },
+                {
+                    "nome": "Shitennoji Temple, Osaka",
+                    "latitude": 34.6552,
+                    "longitude": 135.516713
+                },
+                {
+                    "nome": "Tsutenkaku Tower, Osaka",
+                    "latitude": 34.652395,
+                    "longitude": 135.507153
+                },
+                {
+                    "nome": "Dotonbori, Osaka",
+                    "latitude": 34.6695293,
+                    "longitude": 135.5010183
+                }
+            ]
+        },
+        "2025-08-06": {
+            "locais": [
+                {
+                    "nome": "Nakanoshima Park, Osaka",
+                    "latitude": 34.692109,
+                    "longitude": 135.499024
+                },
+                {
+                    "nome": "National Bunraku Theater, Osaka",
+                    "latitude": 34.66908,
+                    "longitude": 135.505403
+                }
+            ]
+        },
+        "2025-08-07": {
+            "locais": [
+                {
+                    "nome": "Shinsekai, Osaka",
+                    "latitude": 34.649765,
+                    "longitude": 135.507156
+                },
+                {
+                    "nome": "Osaka Aquarium Kaiyukan, Osaka",
+                    "latitude": 34.654518,
+                    "longitude": 135.428965
+                }
+            ]
+        },
+        "2025-08-08": {
+            "locais": [
+                {
+                    "nome": "Osaka Castle, Osaka",
+                    "latitude": 34.687315,
+                    "longitude": 135.526201
+                },
+                {
+                    "nome": "Sumiyoshi Taisha, Osaka",
+                    "latitude": 34.614132,
+                    "longitude": 135.482545
+                },
+                {
+                    "nome": "Tempozan Ferris Wheel, Osaka",
+                    "latitude": 34.655246,
+                    "longitude": 135.42871
+                }
+            ]
+        },
+        "2025-08-09": {
+            "locais": [
+                {
+                    "nome": "Universal Studios Japan, Osaka",
+                    "latitude": 34.665442,
+                    "longitude": 135.432338
+                }
+            ]
+        }
+    }
+}

@@ -14,34 +14,28 @@ Minimize the total distance traveled when visiting a list of tourist attractions
 ## 📁 Project Structure
 ```
 travel-genetic-planner/
-│
-├── data/
-│   ├── pois.csv                  # User-provided tourist spots
-│   └── pois_with_coords.csv     # File enriched with lat/long
-│
-├── src/
-│   ├── maps_api.py              # Fetch coordinates via API (Nominatim)
-│   ├── genetic_algorithm.py     # Genetic Algorithm (to be implemented)
-│   └── planner.py               # Helper functions (distance, etc.)
-│
-├── app/
-│   └── streamlit_app.py         # Streamlit interactive interface (coming soon)
-│
-├── README.md                    # This file
-├── requirements.txt            # Project dependencies
-└── .gitignore
+app/
+├── streamlit_app.py                  # VIEW
+├── core/
+│   ├── api/                          # API clients (model side)
+│   ├── genetic/                      # Algoritmo Genético (model)
+│   ├── model/
+│   │   └── file_input_model.py       # Esquema de entrada do usuário
+│   ├── prompt/
+│   │   └── templates.py              # Prompt templates para OpenAI
+│   ├── services/
+│   │   └── planning_service.py       # CONTROLLER
+│   └── utils/                        # Suporte comum
+├── data/                             # Arquivos de teste
+|README.md                    # This file
+|requirements.txt            # Project dependencies
+|.gitignore
 ```
 
 ---
 
 ## 🚀 How to Use
-1. Add tourist spots in `data/pois.csv` (single column named `place`).
-2. Run the script to fetch coordinates:
-```bash
-python src/maps_api.py
-```
-3. This will generate `data/pois_with_coords.csv` with latitude and longitude.
-4. (Coming soon) Run the optimizer to generate the best route based on distances.
+
 
 ---
 
@@ -71,4 +65,17 @@ folium
 ---
 
 ## 💡 Author
-This project is part of a personal study on Genetic Algorithms with practical application in travel planning.
+
+---
+
+# 🗺️ 1. Roteirização / Planejamento de Rota
+| Critério | Forma de usar na fitness |
+|---|---|
+| 🕒 Menor número de dias | len(roteiro_por_dia) * peso |
+| 🧭 Menor distância total |- total_distancia_km|
+|⏰ Respeitar horários de funcionamento	|- penalidade_por_visita_fora_do_horario|
+|⏳ Tempo total diário respeitado	|- penalidade_por_excesso_de_tempo_por_dia|
+|⭐ Visitar lugares prioritários	|+ bonus_por_prioridade|
+|🔁 Evitar locais repetidos	|- penalidade_por_repetição|
+
+
