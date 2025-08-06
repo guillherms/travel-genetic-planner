@@ -1,0 +1,26 @@
+[
+  {
+    "originIndex": 1,
+    "destinationIndex": 0,
+    "distanceMeters": 2102,
+    "duration": "1780s"
+  },
+  {
+    "originIndex": 0,
+    "destinationIndex": 1,
+    "distanceMeters": 3218,
+    "duration": "2648s"
+  },
+  {
+    "originIndex": 1,
+    "destinationIndex": 1,
+    "distanceMeters": 4121,
+    "duration": "3472s"
+  },
+  {
+    "originIndex": 0,
+    "destinationIndex": 0,
+    "distanceMeters": 5374,
+    "duration": "4499s"
+  }
+]

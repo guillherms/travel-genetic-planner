@@ -1,5 +1,9 @@
 streamlit
+streamlit-folium
 requests
 pandas
 geopy
 folium
+pandantic
+openai
+dotenv

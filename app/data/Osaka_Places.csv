@@ -1,0 +1,16 @@
+﻿places,latitude,longitude,mon,tue,wed,thu,fri,sat,sun,min_visit_time_min,priority
+"Osaka Castle, Osaka",34.687315,135.526201,09:00-17:00,09:00-17:00,09:00-17:00,09:00-17:00,09:00-17:00,09:00-17:00,09:00-17:00,120,1
+"Dotonbori, Osaka",34.6695293,135.5010183,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,60,0
+"Universal Studios Japan, Osaka",34.665442,135.432338,09:00-21:00,09:00-21:00,09:00-21:00,09:00-21:00,09:00-21:00,09:00-21:00,09:00-21:00,240,0
+"Shinsekai, Osaka",34.649765,135.507156,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,60,0
+"Osaka Aquarium Kaiyukan, Osaka",34.654518,135.428965,10:00-20:00,10:00-20:00,10:00-20:00,10:00-20:00,10:00-20:00,10:00-20:00,10:00-20:00,180,0
+"Tsutenkaku Tower, Osaka",34.652395,135.507153,09:00-21:00,09:00-21:00,09:00-21:00,09:00-21:00,09:00-21:00,09:00-21:00,09:00-21:00,60,0
+"Shitennoji Temple, Osaka",34.6552,135.516713,08:30-16:30,08:30-16:30,08:30-16:30,08:30-16:30,08:30-16:30,08:30-16:30,08:30-16:30,90,0
+"Minoo Park, Osaka",34.8269,135.4706,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,180,0
+"Umeda Sky Building, Osaka",34.705252,135.490533,10:00-22:30,10:00-22:30,10:00-22:30,10:00-22:30,10:00-22:30,10:00-22:30,10:00-22:30,90,0
+"Sumiyoshi Taisha, Osaka",34.614132,135.482545,06:00-17:00,06:00-17:00,06:00-17:00,06:00-17:00,06:00-17:00,06:00-17:00,06:00-17:00,60,0
+"Nakanoshima Park, Osaka",34.692109,135.499024,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,60,0
+"Tempozan Ferris Wheel, Osaka",34.655246,135.42871,10:00-22:00,10:00-22:00,10:00-22:00,10:00-22:00,10:00-22:00,10:00-22:00,10:00-22:00,60,0
+"Hozenji Yokocho Alley, Osaka",34.668723,135.502285,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,30,0
+"Osaka Science Museum, Osaka",34.691295,135.491919,09:30-17:00,Closed,09:30-17:00,09:30-17:00,09:30-17:00,09:30-17:00,09:30-17:00,180,0
+"National Bunraku Theater, Osaka",34.66908,135.505403,11:00-22:00,11:00-22:00,11:00-22:00,11:00-22:00,11:00-22:00,11:00-22:00,11:00-22:00,180,0
