@@ -1,12 +1,15 @@
-from datetime import datetime
 import logging
-import pandas as pd
 import folium
-from streamlit_folium import st_folium
+import pandas as pd
 import streamlit as st
+from streamlit_folium import st_folium
+from datetime import datetime
 from core.api.open_api import OpenAi
 from core.utils.file_utils import FileUtils
 from core.utils.date_utils import DateUtils
+from core.utils.request_utils import RequestUtils
+from core.api.google.routes_api import RoutesClient
+from core.api.google.geocoding_api import GeoCodingClient
 from core.genetic.genetic_algorithm import TravelGeneticAlgorithm
 
 
@@ -17,22 +20,56 @@ class TravelPlannerController:
 
     def handle_text_input(self,
                           destination: str,
+                          hotel_name: str,
                           start_date,
                           end_date,
                           temperature: float,
                           top_p: float) -> pd.DataFrame:
-        """
-        Faz a requisição à OpenAI e transforma a resposta em DataFrame.
-        """
+        
         trip_days = self.date_utils.get_trip_days(start_date, end_date)
+        geo_client = GeoCodingClient()
         open_ai = OpenAi(top_p, temperature, destination, trip_days)
-        return open_ai.get_places_tourist_points()
+    
+        def fetch_hotel_coordinates():
+            return geo_client.get_coordinates(hotel_name)
 
-    def handle_file_upload(self, uploaded_file) -> pd.DataFrame:
+        def fetch_tourist_places():
+            return open_ai.get_places_tourist_points()
+        
+        tasks = [fetch_hotel_coordinates, fetch_tourist_places]
+
+        hotel_coordinates, tourist_places_df = RequestUtils.run_parallel_tasks(tasks)
+
+        hotel_df = pd.DataFrame([{
+            'places': 'HOTEL',
+            'latitude': hotel_coordinates[0],
+            'longitude': hotel_coordinates[1],
+            'mon': '00:00-23:59',
+            'tue': '00:00-23:59',
+            'wed': '00:00-23:59',
+            'thu': '00:00-23:59',
+            'fri': '00:00-23:59',
+            'sat': '00:00-23:59',
+            'sun': '00:00-23:59',
+            'estimated_duration_min': 0,
+            'priority': 0
+        }])
+        
+        tourist_places_df = pd.concat([hotel_df, tourist_places_df], ignore_index=True)
+
+        return tourist_places_df
+
+
+
+    def handle_file_upload(self, uploaded_file, hotel_name: str) -> pd.DataFrame:
         """
         Lê o arquivo CSV enviado pelo usuário e transforma em DataFrame.
         """
-        return self.file_utils.read_csv(uploaded_file)
+        geo_client = GeoCodingClient()
+        hotel_coordinates = geo_client.get_coordinates(hotel_name)
+        df_file = self.file_utils.read_csv(uploaded_file)
+        return df_file, hotel_coordinates
+    
 
     def run_genetic_algorithm(self,
                                df_places: pd.DataFrame,
@@ -42,13 +79,18 @@ class TravelPlannerController:
                                crossover: float,
                                time_limit: int,
                                start_date: datetime,
-                               end_date: datetime,
-                               hotel_coordinates: tuple) -> TravelGeneticAlgorithm:
+                               end_date: datetime) -> TravelGeneticAlgorithm:
         """
         Executa o algoritmo genético com os dados fornecidos.
         """
+        # Consulta API Routes para obter distâncias e durações
+        routes_client = RoutesClient()
+        duration_df, distance_df = routes_client.compute_duration_and_distance(df_places)
+        
         ga = TravelGeneticAlgorithm(
             places=df_places,
+            duration = duration_df,
+            distance = distance_df,
             population_size=pop_size,
             generations=generations,
             mutation_rate=mutation,
@@ -56,7 +98,6 @@ class TravelPlannerController:
             time_min_daily=time_limit,
             start_date=start_date,
             end_date=end_date,
-            hotel_coordinates=hotel_coordinates
         )
         return ga.run()
 

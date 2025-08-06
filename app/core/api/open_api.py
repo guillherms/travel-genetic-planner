@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 from openai import OpenAI
 from dotenv import load_dotenv
 from core.utils.file_utils import FileUtils
@@ -18,10 +19,10 @@ class OpenAi:
         self.place_name = place_name
         self.trip_days = trip_days
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.model="gpt-4"
+        self.model="gpt-4o"
         self.file_utils = FileUtils()
         
-    def get_places_tourist_points(self):
+    def get_places_tourist_points(self) -> pd.DataFrame:
         resposta = self.client.chat.completions.create(
             messages=[
                 {
@@ -30,7 +31,7 @@ class OpenAi:
                 },
                 {
                     "role": "user",
-                    "content": self.place_name
+                    "content": f"Estou planejando uma viagem de {self.trip_days} dias para {self.place_name}. Por favor, siga as instruções do sistema e retorne o número adequado de pontos turísticos."
                 }
             ],
             model=self.model,
@@ -40,7 +41,7 @@ class OpenAi:
         open_ai_response =  resposta.choices[0].message.content
         return self.file_utils.from_string(open_ai_response)
     
-    def _get_system_instructions(self):
+    def _get_system_instructions(self) -> str:
         """
         Generate system instructions for the travel agent based on the destination and trip duration.
         
@@ -51,6 +52,8 @@ class OpenAi:
         Returns:
             str: Formatted system instructions.
         """
+        total_pontos = self.trip_days * 2  # no mínimo 2 por dia
         return SYSTEM_INSTRUCTIONS.format(
-            quantidade_dias_viagem=self.trip_days
+            quantidade_dias_viagem=self.trip_days,
+            quantidade_total_pontos=total_pontos
         )

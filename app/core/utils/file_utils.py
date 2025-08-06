@@ -1,8 +1,8 @@
-from io import StringIO
-import pandas as pd
 import logging
-from core.model.files_schema import FileSchema
+import pandas as pd
+from io import StringIO
 from pydantic import ValidationError
+from core.model.files_schema import FileSchema
 from streamlit.runtime.uploaded_file_manager import UploadedFile
   
 class FileUtils:

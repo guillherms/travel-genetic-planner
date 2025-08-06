@@ -12,15 +12,18 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 class TravelGeneticAlgorithm:
     def __init__(self,
                  places: pd.DataFrame,
+                 duration: pd.DataFrame,
+                 distance: pd.DataFrame,
                  population_size: int,
                  generations:int,
                  mutation_rate: int,
                  crossover_rate: int,
                  time_min_daily:int,
                  start_date: datetime,
-                 end_date: datetime,
-                 hotel_coordinates: tuple):
+                 end_date: datetime,):
         self.places = places
+        self.duration = duration
+        self.distance = distance
         self.population_size = population_size
         self.generations = generations
         self.mutation_rate = mutation_rate
@@ -28,7 +31,6 @@ class TravelGeneticAlgorithm:
         self.time_min_daily = time_min_daily
         self.start_date = start_date
         self.end_date = end_date
-        self.hotel_coordinates = hotel_coordinates
         self.population = pd.DataFrame()
         self.geo_utils = GeoUtils()
         self.time_utils = TimeUtils()
@@ -66,7 +68,7 @@ class TravelGeneticAlgorithm:
 
             self.population = elite + mutated_children[:self.population_size - len(elite)]
 
-            print(f"Generation {generation} | Best fitness: {current_best:.2f}")
+            logging.info(f"Generation {generation} | Best fitness: {current_best:.2f}")
             generation_reached = generation + 1
 
             if generations_without_improvement >= max_generations_without_improvement:
@@ -102,7 +104,7 @@ class TravelGeneticAlgorithm:
                     "longitude": float(lugar['longitude'])
                 })
             roteiro_dict[data_str] = {"locais": locais}
-            print(f"  Dia {i+1} ({data_str}): {[l['nome'] for l in locais]}")
+            logging.info(f"  Dia {i+1} ({data_str}): {[l['nome'] for l in locais]}")
         return roteiro_dict
 
     def _format_response(self,
@@ -142,7 +144,6 @@ class TravelGeneticAlgorithm:
             fitness_scores = []
             roteiros_por_individuo = []
 
-            # Calcula os dias da semana do roteiro
             dias_roteiro = self.date_utils.get_date_range(self.start_date, self.end_date) 
             dias_da_semana = [self.date_utils.get_day_abbr(d).lower() for d in dias_roteiro]
 
@@ -150,48 +151,30 @@ class TravelGeneticAlgorithm:
                 roteiro_por_dia = []
                 dia_atual = []
                 tempo_dia = 0
-                tempo_atual = 8 * 60
-                #A variável tempo_atual = 8 * 60 representa o horário de início do dia em minutos desde a meia-noite.
-                distancia_total_km = 0
-                penalidade_horario = 0
-                prioridade_bonus = 0
-                penalidade_excesso_diario = 0
+                tempo_atual = 8 * 60  # 08:00h em minutos
                 tempo_total_usado = 0
+                prioridade_bonus = 0
+                funcionamento_bonus = 0
+                deslocamento_total = 0
                 dia_index = 0
 
                 for i, idx in enumerate(individuo):
                     lugar = self.places.iloc[idx]
                     tempo_visita = lugar['estimated_duration_min']
 
-                    # Deslocamento
-                    tempo_desloc = 0
+                    # Tempo de deslocamento entre locais
                     if dia_atual:
-                        anterior = self.places.iloc[dia_atual[-1]]
-                        tempo_desloc = self.geo_utils.estimated_travel_minutes(
-                            anterior['latitude'], anterior['longitude'],
-                            lugar['latitude'], lugar['longitude'], 30)
-                        distancia_total_km += self.geo_utils.haversine_km(
-                            anterior['latitude'], anterior['longitude'],
-                            lugar['latitude'], lugar['longitude'])
+                        origem = self.places.iloc[dia_atual[-1]]['places']
                     else:
-                        tempo_desloc = self.geo_utils.estimated_travel_minutes(
-                            self.hotel_coordinates[0], self.hotel_coordinates[1],
-                            lugar['latitude'], lugar['longitude'], 30)
-                        distancia_total_km += self.geo_utils.haversine_km(
-                            self.hotel_coordinates[0], self.hotel_coordinates[1],
-                            lugar['latitude'], lugar['longitude'])
+                        origem = 'HOTEL'
 
+                    destino = lugar['places']
+                    tempo_desloc = self.duration.loc[origem, destino]
+                    deslocamento_total += tempo_desloc
                     tempo_total = tempo_visita + tempo_desloc
 
+                    # Verifica se cabe no dia atual
                     if tempo_dia + tempo_total > self.time_min_daily:
-                        excesso = (tempo_dia + tempo_total) - self.time_min_daily
-                        penalidade_excesso_diario += excesso
-
-                        if dia_atual:
-                            ultimo = self.places.iloc[dia_atual[-1]]
-                            distancia_total_km += self.geo_utils.haversine_km(
-                                ultimo['latitude'], ultimo['longitude'],
-                                self.hotel_coordinates[0], self.hotel_coordinates[1])
                         roteiro_por_dia.append(dia_atual)
                         dia_atual = []
                         tempo_dia = 0
@@ -199,33 +182,25 @@ class TravelGeneticAlgorithm:
                         dia_index += 1
 
                         if dia_index >= len(dias_da_semana):
-                            # Penaliza caso precise de mais dias do que o permitido
-                            penalidade_excesso_diario += 200
-                            break
-
-                        #Recalcula deslocamento para o novo dia
-                        tempo_desloc = self.geo_utils.estimated_travel_minutes(
-                            self.hotel_coordinates[0], self.hotel_coordinates[1],
-                            lugar['latitude'], lugar['longitude'], 30)
-                        distancia_total_km += self.geo_utils.haversine_km(
-                            self.hotel_coordinates[0], self.hotel_coordinates[1],
-                            lugar['latitude'], lugar['longitude'])
+                            break  # excedeu número de dias disponíveis
+                        # Recalcula deslocamento do hotel até novo lugar
+                        tempo_desloc = self.duration.loc['HOTEL', destino]
+                        deslocamento_total += tempo_desloc
                         tempo_total = tempo_visita + tempo_desloc
 
-                    #Verifica horário de funcionamento
+                    # Verifica horário de funcionamento
                     dia_semana_atual = dias_da_semana[dia_index]
-                    horario_str = lugar.get(dia_semana_atual, "Fechado")
+                    horario_str = lugar.get(dia_semana_atual, "Closed")
                     inicio_func, fim_func = self.time_utils.parse_time_range(horario_str)
                     chegada = tempo_atual + tempo_desloc
 
-                    if inicio_func is not None:
-                        if not (inicio_func <= chegada <= fim_func - tempo_visita):
-                            penalidade_horario += 50
-                    else:
-                        penalidade_horario += 100
+                    if inicio_func is not None and inicio_func <= chegada <= fim_func - tempo_visita:
+                        funcionamento_bonus += 1  # recompensa por estar dentro do horário
+                    # else: nenhuma penalização
 
+                    # Prioridade
                     if 'priority' in lugar and lugar['priority'] == 1:
-                        prioridade_bonus += 100
+                        prioridade_bonus += 1  # recompensa por visitar local prioritário
 
                     dia_atual.append(idx)
                     tempo_dia += tempo_total
@@ -233,24 +208,26 @@ class TravelGeneticAlgorithm:
                     tempo_atual += tempo_total
 
                 if dia_atual:
-                    ultimo = self.places.iloc[dia_atual[-1]]
-                    distancia_total_km += self.geo_utils.haversine_km(
-                        ultimo['latitude'], ultimo['longitude'],
-                        self.hotel_coordinates[0], self.hotel_coordinates[1])
                     roteiro_por_dia.append(dia_atual)
 
-                fitness = (
-                    - len(roteiro_por_dia) * 100
-                    - distancia_total_km
-                    - penalidade_horario
-                    - penalidade_excesso_diario
-                    + prioridade_bonus
+                # Recompensas:
+                # - quanto menos tempo de deslocamento, melhor
+                # - quanto mais locais prioritários, melhor
+                # - quanto mais locais dentro do horário, melhor
+                # - quanto menos dias usados, melhor
+
+                recompensa_total = (
+                    (len(individuo) - len(roteiro_por_dia)) * 200 +  # usar menos dias
+                    (prioridade_bonus * 100) +
+                    (funcionamento_bonus * 50) +
+                    max(1, (len(individuo) * 30 - deslocamento_total))  # recompensa por menos deslocamento
                 )
 
-                fitness_scores.append(fitness)
+                fitness_scores.append(recompensa_total)
                 roteiros_por_individuo.append(roteiro_por_dia)
 
             return fitness_scores, roteiros_por_individuo
+
         except Exception as e:
             logging.exception(f"An error occurred while evaluating fitness: {e}")
             raise
