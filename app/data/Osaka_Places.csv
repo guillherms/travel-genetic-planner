@@ -1,4 +1,4 @@
-﻿places,latitude,longitude,mon,tue,wed,thu,fri,sat,sun,min_visit_time_min,priority
+﻿places,latitude,longitude,mon,tue,wed,thu,fri,sat,sun,estimated_duration_min,priority
 "Osaka Castle, Osaka",34.687315,135.526201,09:00-17:00,09:00-17:00,09:00-17:00,09:00-17:00,09:00-17:00,09:00-17:00,09:00-17:00,120,1
 "Dotonbori, Osaka",34.6695293,135.5010183,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,60,0
 "Universal Studios Japan, Osaka",34.665442,135.432338,09:00-21:00,09:00-21:00,09:00-21:00,09:00-21:00,09:00-21:00,09:00-21:00,09:00-21:00,240,0
