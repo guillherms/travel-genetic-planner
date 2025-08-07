@@ -46,12 +46,15 @@ class TravelApp:
                     destination = st.text_input("Destination", placeholder="e.g., Paris, France", key="destination_text")
                     submitted = st.form_submit_button("Submit")
                 if submitted and destination:
-                    st.session_state.df = self.controller.handle_text_input(destination,
-                                                                            hotel_name,
-                                                                            start_date,
-                                                                            end_date,
-                                                                            temperature,
-                                                                            top_p)
+                    st.session_state.df,\
+                    st.session_state.df_duration,\
+                    st.session_state.df_distance,\
+                    st.session_state.hotel_coordinates = self.controller.handle_text_input(destination,
+                                                                                     hotel_name,
+                                                                                     start_date,
+                                                                                     end_date,
+                                                                                     temperature,
+                                                                                     top_p)
                 elif submitted and destination == "":
                     st.warning("Por favor, preencha o campo de destino antes de continuar.")
 
@@ -60,15 +63,18 @@ class TravelApp:
                     st.write("Faça upload de um arquivo CSV contendo os pontos turísticos.")
                     hotel_name = st.text_input("Hotel Name", placeholder="Name of your hotel (e.g., Hotel XYZ)", key="hotel_file")
                     st.code(
-                        "places ,latitude,longitude,mon,tue,wed,thu,fri,sat,sun,estimated_duration_min,priority\\n"
-                        "Eiffel Tower,48.8584,2.2945,09:00-18:00,..."
+                        "places,latitude,longitude,mon,tue,wed,thu,fri,sat,sun,estimated_duration_min,priority\n"
+                        "Osaka Castle,34.687315,135.526201,09:00-17:00,09:00-17:00,09:00-17:00,09:00-17:00,09:00-17:00,09:00-17:00,09:00-17:00,120,1\n"
+                        "Dotonbori,34.6695293,135.5010183,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,Open 24 hours,60,0\n"
+                        "Universal Studios Japan,34.665442,135.432338,09:00-21:00,09:00-21:00,09:00-21:00,09:00-21:00,09:00-21:00,09:00-21:00,09:00-21:00,240,0"
                     )
                     uploaded_file = st.file_uploader("📂 Upload CSV file", type=["csv"])
                     submitted = st.form_submit_button("Submit")
                     if submitted and uploaded_file:
                         try:
-                            st.session_state.df, st.session_state.hotel_coordinates\
-                            = self.controller.handle_file_upload(uploaded_file, hotel_name)
+                            st.session_state.df,\
+                            st.session_state.df_duration,\
+                            st.session_state.df_distance = self.controller.handle_file_upload(uploaded_file, hotel_name)
                         except Exception as e:
                             st.error(f"Erro ao ler o arquivo: {e}")
                     elif submitted and uploaded_file is None:
@@ -91,6 +97,8 @@ class TravelApp:
                     with st.spinner("Running Genetic Algorithm for each day..."):
                         travel_planner = self.controller.run_genetic_algorithm(
                             st.session_state.df,
+                            st.session_state.df_duration,
+                            st.session_state.df_distance,
                             pop_size,
                             generations,
                             mutation,
@@ -105,11 +113,12 @@ class TravelApp:
             
             if "optimized_route" in st.session_state:
                 self.controller.render_result_summary(st.session_state.optimized_route)
-                hotel_row = st.session_state.df[st.session_state.df["places"] == "HOTEL"].iloc[0]
-                hotel_coords = (hotel_row["latitude"], hotel_row["longitude"])
+                
+                #hotel_row = st.session_state.df[st.session_state.df["places"] == "HOTEL"].iloc[0]
+                #hotel_coords = (float(hotel_row["latitude"]), float(hotel_row["longitude"]))
                 self.controller.render_daily_maps(
                     roteiro_por_dia=st.session_state.optimized_route.get("roteiro_por_dia", {}),
-                    hotel_coords=hotel_coords
+                    hotel_coords=st.session_state.hotel_coordinates
                 )
         except Exception as e:
             logging.exception(f"An error occurred: {e}")
