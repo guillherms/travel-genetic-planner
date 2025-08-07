@@ -129,4 +129,4 @@ A população inicial é gerada por embaralhamento aleatório dos pontos turíst
 ---
 
 ## 📮 Contato
-- [LinkedIn](https://www.linkedin.com/in/guilherme-santos-oliveira)
+- - [LinkedIn](https://www.linkedin.com/in/guilherme-santos-de-oliveira-ba9986161/)
