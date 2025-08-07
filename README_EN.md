@@ -123,4 +123,4 @@ Initial population is built by randomly shuffling the locations (with possible d
 
 - Developed by Guilherme Santos Oliveira  
 - Academic Project – IADevs Postgraduate Phase 2: AI Evolution  
-- [LinkedIn](https://www.linkedin.com/in/guilherme-santos-oliveira)
+- [LinkedIn](https://www.linkedin.com/in/guilherme-santos-de-oliveira-ba9986161/)
